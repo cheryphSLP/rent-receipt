@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rent Receipt">
+<title>Rent Receipt</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#1F3864;--blue-light:#D6E4F7;
+  --green-bg:#EAF3DE;--green-txt:#3B6D11;
+  --bg:#F2F4F8;--card:#fff;--border:#E0E4EC;
+  --text:#1A1A2E;--muted:#6B7280;
+  --radius:14px;--rsm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);padding-bottom:60px}
+.topbar{background:var(--blue);padding:52px 20px 20px;color:#fff}
+.topbar h1{font-size:21px;font-weight:700}
+.topbar p{font-size:13px;opacity:.7;margin-top:3px}
+.rec-row{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.rec-badge{font-size:17px;font-weight:700;background:rgba(255,255,255,.18);padding:7px 16px;border-radius:30px}
+.adj{display:flex;gap:6px}
+.adj button{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.22);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.adj button:active{background:rgba(255,255,255,.4)}
+.content{padding:16px}
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:18px;margin-bottom:14px}
+.clabel{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:500}
+input,select{width:100%;padding:14px;font-size:16px;color:var(--text);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rsm);outline:none;-webkit-appearance:none;font-family:inherit}
+input:focus,select:focus{border-color:var(--blue);background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.amount-wrap{position:relative}
+.sym{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:20px;font-weight:700;color:var(--blue);pointer-events:none}
+.amount-wrap input{padding-left:30px;font-size:24px;font-weight:700;color:var(--blue)}
+.btn{width:100%;padding:17px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:17px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{opacity:.85}
+.btn:disabled{opacity:.5}
+.status{border-radius:var(--rsm);padding:13px 15px;font-size:14px;font-weight:500;display:none;align-items:center;gap:10px;margin-bottom:12px}
+.status.loading{background:#FEF9C3;color:#854D0E;display:flex}
+.status.ok{background:var(--green-bg);color:var(--green-txt);display:flex}
+.status.err{background:#FEE2E2;color:#991B1B;display:flex}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.result{background:var(--card);border-radius:var(--radius);border:1.5px solid #86EFAC;padding:18px;margin-bottom:14px;display:none}
+.rhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rtitle{font-size:15px;font-weight:600;color:#16A34A}
+.badge{background:var(--green-bg);color:var(--green-txt);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.amtbox{text-align:center;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:12px}
+.amtbig{font-size:34px;font-weight:700;color:var(--blue)}
+.amtwds{font-size:11px;color:var(--muted);margin-top:3px}
+.drow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bg);font-size:14px}
+.drow:last-child{border-bottom:none}
+.dk{color:var(--muted)}
+.dv{font-weight:500;text-align:right;max-width:60%}
+.emailrow{display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px}
+.sharehint{background:#FFF7ED;border:1px solid #FED7AA;border-radius:var(--rsm);padding:13px 15px;font-size:13px;color:#92400E;line-height:1.8;display:none;margin-bottom:12px}
+.sharehint strong{font-weight:600}
+.infobox{background:#EEF2FF;border-radius:var(--rsm);padding:12px 14px;margin-bottom:14px}
+.infobox p{font-size:13px;color:#3730A3;line-height:1.55}
+
+/* ── PRINT STYLES ── */
+#printArea{display:none}
+@media print{
+  body>*{display:none!important}
+  #printArea{display:block!important;margin:0;padding:0}
+  @page{size:A4;margin:14mm 16mm}
+  .pr{font-family:Arial,sans-serif;font-size:10pt;color:#111}
+  .pr-head{background:#1F3864;color:#fff;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;margin-bottom:0}
+  .pr-head h2{font-size:13pt;margin:0;font-weight:700}
+  .pr-head .sub{font-size:8pt;opacity:.8;margin-top:2px}
+  .pr-head .rinfo{text-align:right}
+  .pr-head .rinfo .rid{font-size:10pt;font-weight:700}
+  .pr-head .rinfo .iss{font-size:7.5pt;opacity:.8;margin-top:2px}
+  table.pt{width:100%;border-collapse:collapse}
+  table.pt td{padding:5.5px 9px;font-size:9pt;border:.3pt solid #ccc;vertical-align:middle}
+  table.pt tr td:first-child{background:#D6E4F7;font-weight:700;color:#1F3864;width:36%}
+  table.pt tr:nth-child(even) td:first-child{background:#e8f0fb}
+  .pr-amt{text-align:center;border:1pt solid #1F3864;border-radius:4px;padding:11px;margin:10px 0}
+  .pr-amt .lbl{font-size:7.5pt;color:#555;text-transform:uppercase;letter-spacing:.5px}
+  .pr-amt .num{font-size:22pt;font-weight:700;color:#1F3864;margin:3px 0}
+  .pr-amt .wds{font-size:8pt;color:#666;font-style:italic}
+  .pr-paid{text-align:right;margin-top:8px}
+  .pr-paid span{background:#EAF3DE;color:#3B6D11;font-size:9pt;font-weight:700;padding:3px 12px;border-radius:20px;border:1pt solid #86EFAC}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>&#127968; Rent Receipt</h1>
+  <div class="rec-row">
+    <div class="rec-badge" id="recDisplay">REC-001</div>
+    <div class="adj">
+      <button onclick="changeRec(-1)">&#8722;</button>
+      <button onclick="changeRec(1)">&#43;</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="infobox">
+    <p>Fill in the details and tap <strong>Generate &amp; Send</strong> — the receipt opens ready to share, and a copy goes to your Gmail.</p>
+  </div>
+
+  <div class="card">
+    <div class="clabel">Tenant &amp; Payment</div>
+
+    <div class="field">
+      <label>Tenant full name</label>
+      <input type="text" id="tenantName" placeholder="e.g. John Smith" autocomplete="off" autocorrect="off" />
+    </div>
+
+    <div class="field">
+      <label>Amount received</label>
+      <div class="amount-wrap">
+        <span class="sym">&#163;</span>
+        <input type="number" id="amount" placeholder="600" inputmode="decimal" step="0.01" min="0" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Payment method</label>
+      <select id="method">
+        <option value="Bank Transfer" selected>Bank Transfer</option>
+        <option value="Standing Order">Standing Order</option>
+        <option value="Cash">Cash</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="row2">
+        <div>
+          <label>Month</label>
+          <select id="month">
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+        </div>
+        <div>
+          <label>Year</label>
+          <select id="year">
+            <option>2025</option>
+            <option selected>2026</option>
+            <option>2027</option>
+            <option>2028</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Property address</label>
+      <input type="text" id="propAddress" value="3 Rochester Way, Basildon, Essex SS14 3QG" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label>Date of payment</label>
+      <input type="date" id="payDate" />
+    </div>
+  </div>
+
+  <div class="status" id="statusBar">
+    <div class="spin" id="spinner"></div>
+    <span id="statusMsg">Working...</span>
+  </div>
+
+  <button class="btn" id="genBtn" onclick="handleGenerate()">
+    &#8659;&nbsp; Generate &amp; Send Receipt
+  </button>
+
+  <div class="result" id="resultCard">
+    <div class="rhead">
+      <div class="rtitle">&#10003; Receipt ready</div>
+      <span class="badge">PAID</span>
+    </div>
+    <div class="amtbox">
+      <div class="amtbig" id="r_amt"></div>
+      <div class="amtwds" id="r_wds"></div>
+    </div>
+    <div class="drow"><span class="dk">Receipt No.</span><span class="dv" id="r_rec"></span></div>
+    <div class="drow"><span class="dk">Tenant</span><span class="dv" id="r_name"></span></div>
+    <div class="drow"><span class="dk">Period</span><span class="dv" id="r_period"></span></div>
+    <div class="drow"><span class="dk">Method</span><span class="dv" id="r_method"></span></div>
+    <div class="drow"><span class="dk">Date Paid</span><span class="dv" id="r_date"></span></div>
+    <div class="emailrow" id="emailRow">
+      &#9993;&nbsp;<span id="emailMsg">Sending to lawriph@gmail.com...</span>
+    </div>
+  </div>
+
+  <div class="sharehint" id="shareHint">
+    <strong>To send to tenant via WhatsApp:</strong><br>
+    On the print screen &#8594; tap <strong>Share</strong> &#8594; tap <strong>Save to Files</strong><br>
+    Then open Files app &#8594; find the PDF &#8594; Share &#8594; WhatsApp
+  </div>
+</div>
+
+<!-- PRINT RECEIPT -->
+<div id="printArea">
+  <div class="pr">
+    <div class="pr-head">
+      <div>
+        <h2>RENT PAYMENT RECEIPT</h2>
+        <div class="sub" id="p_addr_head"></div>
+      </div>
+      <div class="rinfo">
+        <div class="rid" id="p_recid"></div>
+        <div class="iss">Issued: <span id="p_issued"></span></div>
+      </div>
+    </div>
+    <table class="pt">
+      <tr><td>Received From</td><td id="p_name"></td></tr>
+      <tr><td>Property</td><td id="p_addr"></td></tr>
+      <tr><td>Payment For</td><td id="p_for"></td></tr>
+      <tr><td>Date of Payment</td><td id="p_date"></td></tr>
+      <tr><td>Payment Method</td><td id="p_method"></td></tr>
+      <tr><td>Balance Remaining</td><td>&#163;0.00</td></tr>
+    </table>
+    <div class="pr-amt">
+      <div class="lbl">Amount Received</div>
+      <div class="num" id="p_amt"></div>
+      <div class="wds" id="p_wds"></div>
+    </div>
+    <div class="pr-paid"><span>PAID &#10003;</span></div>
+  </div>
+</div>
+
+<script>
+var recNum = parseInt(localStorage.getItem('slp_rec') || '1');
+function updateRec(){ document.getElementById('recDisplay').textContent = 'REC-' + String(recNum).padStart(3,'0'); }
+function changeRec(d){ recNum = Math.max(1, recNum+d); localStorage.setItem('slp_rec', recNum); updateRec(); }
+
+var now = new Date();
+document.getElementById('month').selectedIndex = now.getMonth();
+document.getElementById('payDate').value = now.toISOString().split('T')[0];
+updateRec();
+
+function numWords(n){
+  var o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  var t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  if(n===0)return'Zero';
+  if(n<20)return o[n];
+  if(n<100)return t[Math.floor(n/10)]+(n%10?' '+o[n%10]:'');
+  if(n<1000)return o[Math.floor(n/100)]+' Hundred'+(n%100?' and '+numWords(n%100):'');
+  return numWords(Math.floor(n/1000))+' Thousand'+(n%1000?' '+numWords(n%1000):'');
+}
+function amtWords(amt){
+  var p=parseFloat(amt).toFixed(2).split('.');
+  var w=numWords(parseInt(p[0]))+' Pounds';
+  if(parseInt(p[1])>0) w+=' and '+numWords(parseInt(p[1]))+' Pence';
+  return w+' Only';
+}
+
+function setStatus(type,msg){
+  var b=document.getElementById('statusBar');
+  b.className='status '+type;
+  document.getElementById('spinner').style.display=(type==='loading'?'block':'none');
+  document.getElementById('statusMsg').textContent=msg;
+}
+
+function sendEmail(params){
+  return new Promise(function(res,rej){
+    var x=new XMLHttpRequest();
+    x.open('POST','https://api.emailjs.com/api/v1.0/email/send',true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.timeout=15000;
+    x.onload=function(){
+      if(x.status===200){res();}
+      else{rej('Error '+x.status+': '+x.responseText);}
+    };
+    x.onerror=function(){rej('Network error - check internet connection');};
+    x.ontimeout=function(){rej('Request timed out');};
+    x.send(JSON.stringify({
+      service_id:'service_u3j4j6l',
+      template_id:'template_c1ytyyl',
+      user_id:'ue2x3WPbqOthKfyOb',
+      template_params:params
+    }));
+  });
+}
+
+function handleGenerate(){
+  var name   = document.getElementById('tenantName').value.trim();
+  var amount = document.getElementById('amount').value.trim();
+  var method = document.getElementById('method').value;
+  var month  = document.getElementById('month').value;
+  var year   = document.getElementById('year').value;
+  var payDate= document.getElementById('payDate').value;
+  var propAddress = document.getElementById('propAddress').value.trim() || '3 Rochester Way, Basildon, Essex SS14 3QG';
+
+  if(!name)  { alert('Please enter the tenant name.'); return; }
+  if(!amount){ alert('Please enter the amount.'); return; }
+
+  var btn=document.getElementById('genBtn');
+  btn.disabled=true;
+  document.getElementById('resultCard').style.display='none';
+  document.getElementById('shareHint').style.display='none';
+
+  var recId   = 'REC-'+String(recNum).padStart(3,'0');
+  var amtFixed= parseFloat(amount).toFixed(2);
+  var amtW    = amtWords(amount);
+  var dateStr = payDate ? new Date(payDate+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}) : 'Not specified';
+  var issued  = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Populate print receipt
+  document.getElementById('p_recid').textContent  = recId;
+  document.getElementById('p_issued').textContent = issued;
+  document.getElementById('p_name').textContent   = name;
+  document.getElementById('p_for').textContent    = 'Rent \u2014 '+month+' '+year;
+  document.getElementById('p_date').textContent   = dateStr;
+  document.getElementById('p_method').textContent = method;
+  document.getElementById('p_amt').textContent       = '\u00a3'+amtFixed;
+  document.getElementById('p_wds').textContent       = amtW;
+  document.getElementById('p_addr').textContent      = propAddress;
+  document.getElementById('p_addr_head').textContent = propAddress+' \u00a0|\u00a0 Shared Room Tenancy';
+
+  // Increment receipt number
+  recNum++;
+  localStorage.setItem('slp_rec',recNum);
+  updateRec();
+
+  // Show result card immediately
+  document.getElementById('r_amt').textContent    = '\u00a3'+parseFloat(amtFixed).toLocaleString('en-GB',{minimumFractionDigits:2});
+  document.getElementById('r_wds').textContent    = amtW;
+  document.getElementById('r_rec').textContent    = recId;
+  document.getElementById('r_name').textContent   = name;
+  document.getElementById('r_period').textContent = month+' '+year;
+  document.getElementById('r_method').textContent = method;
+  document.getElementById('r_date').textContent   = dateStr;
+  document.getElementById('resultCard').style.display='block';
+  document.getElementById('shareHint').style.display='block';
+  document.getElementById('emailMsg').textContent = 'Sending to lawriph@gmail.com...';
+  document.getElementById('emailRow').style.color = 'var(--muted)';
+
+  setStatus('loading','Sending copy to your Gmail...');
+
+  // Send email first, then print
+  sendEmail({
+    rec_id:      recId,
+    tenant_name: name,
+    period:      month+' '+year,
+    amount:      '\u00a3'+amtFixed,
+    amount_words:amtW,
+    method:      method,
+    date_paid:   dateStr,
+    property:    propAddress,
+    issued_date: issued,
+    to_email:    'lawriph@gmail.com'
+  }).then(function(){
+    setStatus('ok','Email sent to your Gmail \u2713');
+    document.getElementById('emailMsg').textContent = '\u2713 Copy sent to lawriph@gmail.com';
+    document.getElementById('emailRow').style.color = 'var(--green-txt)';
+    btn.disabled=false;
+    setTimeout(function(){ window.print(); }, 300);
+  }).catch(function(err){
+    setStatus('err','Email failed: '+err);
+    document.getElementById('emailMsg').textContent = '\u26a0 Email not sent \u2014 receipt still opening';
+    document.getElementById('emailRow').style.color = '#B45309';
+    btn.disabled=false;
+    setTimeout(function(){ window.print(); }, 300);
+  });
+}
+</script>
+</body>
+</html>
